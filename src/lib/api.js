@@ -57,3 +57,31 @@ export async function loginUser({ username, password }) {
 export async function getCurrentUser() {
   return apiRequest('/auth/me/', { auth: true })
 }
+
+export async function listBloodRequests() {
+  return apiRequest('/requests/', { auth: true })
+}
+
+export async function createBloodRequest(payload) {
+  return apiRequest('/requests/', { method: 'POST', body: payload, auth: true })
+}
+
+export async function getDonorProfile() {
+  return apiRequest('/donors/profile/', { auth: true })
+}
+
+export async function updateDonorProfile(payload) {
+  return apiRequest('/donors/profile/', { method: 'PATCH', body: payload, auth: true })
+}
+
+export async function listMyMatches() {
+  return apiRequest('/requests/my_matches/', { auth: true })
+}
+
+export async function acceptRequest(id) {
+  return apiRequest(`/requests/${id}/accept/`, { method: 'POST', auth: true })
+}
+
+export async function declineRequest(id) {
+  return apiRequest(`/requests/${id}/decline/`, { method: 'POST', auth: true })
+}

@@ -97,3 +97,11 @@ export async function selectDonor(id, donorId) {
     auth: true,
   })
 }
+
+export async function fulfillRequest(id) {
+  return apiRequest(`/requests/${id}/fulfill/`, { method: 'POST', auth: true })
+}
+
+export async function cancelRequest(id) {
+  return apiRequest(`/requests/${id}/cancel/`, { method: 'POST', auth: true })
+}

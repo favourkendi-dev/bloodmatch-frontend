@@ -5,6 +5,8 @@ import {
   createBloodRequest,
   getRequestMatches,
   selectDonor,
+  fulfillRequest,
+  cancelRequest,
 } from '../lib/api'
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -38,6 +40,9 @@ function HospitalDashboard() {
   const [matchesByRequest, setMatchesByRequest] = useState({})
   const [matchesLoading, setMatchesLoading] = useState(false)
   const [selectingDonorId, setSelectingDonorId] = useState(null)
+
+  // Fulfill/Cancel state, keyed by request id
+  const [actioningRequestId, setActioningRequestId] = useState(null)
 
   const loadRequests = async () => {
     setLoading(true)
@@ -114,6 +119,32 @@ function HospitalDashboard() {
       setError(err.message)
     } finally {
       setSelectingDonorId(null)
+    }
+  }
+
+  const handleFulfill = async (requestId) => {
+    setActioningRequestId(requestId)
+    setError('')
+    try {
+      await fulfillRequest(requestId)
+      await loadRequests()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setActioningRequestId(null)
+    }
+  }
+
+  const handleCancel = async (requestId) => {
+    setActioningRequestId(requestId)
+    setError('')
+    try {
+      await cancelRequest(requestId)
+      await loadRequests()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setActioningRequestId(null)
     }
   }
 
@@ -281,6 +312,25 @@ function HospitalDashboard() {
                   >
                     {expandedRequestId === req.id ? 'Hide Matches' : 'View Matches'}
                   </button>
+                )}
+
+                {req.status === 'in_progress' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleFulfill(req.id)}
+                      disabled={actioningRequestId === req.id}
+                      className="bg-success text-white text-xs font-medium px-4 py-2 rounded-full hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      {actioningRequestId === req.id ? 'Working...' : 'Mark Fulfilled'}
+                    </button>
+                    <button
+                      onClick={() => handleCancel(req.id)}
+                      disabled={actioningRequestId === req.id}
+                      className="bg-white text-critical border border-critical text-xs font-medium px-4 py-2 rounded-full hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      Cancel Request
+                    </button>
+                  </div>
                 )}
 
                 {expandedRequestId === req.id && (

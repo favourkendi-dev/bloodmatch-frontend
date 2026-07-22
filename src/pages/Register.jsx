@@ -1,28 +1,57 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { registerUser } from '../lib/api'
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 function Register() {
+  const navigate = useNavigate()
   const [role, setRole] = useState('donor')
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
-    phone: '',
-    bloodType: '',
-    registrationNo: '',
+    phone_number: '',
+    blood_type: '',
+    hospital_name: '',
+    registration_no: '',
   })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    //  logging 
-    console.log('Register submitted:', { role, ...formData })
+    setError('')
+    setLoading(true)
+
+    try {
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role,
+        phone_number: formData.phone_number,
+      }
+
+      if (role === 'donor') {
+        payload.blood_type = formData.blood_type
+      } else {
+        payload.hospital_name = formData.hospital_name
+        payload.registration_no = formData.registration_no
+      }
+
+      await registerUser(payload)
+      navigate('/login')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -35,15 +64,12 @@ function Register() {
           Join BloodMatch as a donor or a hospital
         </p>
 
-        {/* Role toggle */}
         <div className="flex bg-background rounded-full p-1 mb-6">
           <button
             type="button"
             onClick={() => setRole('donor')}
             className={`flex-1 py-2 rounded-full text-sm font-medium transition ${
-              role === 'donor'
-                ? 'bg-primary text-white'
-                : 'text-text-muted'
+              role === 'donor' ? 'bg-primary text-white' : 'text-text-muted'
             }`}
           >
             Donor
@@ -52,29 +78,33 @@ function Register() {
             type="button"
             onClick={() => setRole('hospital')}
             className={`flex-1 py-2 rounded-full text-sm font-medium transition ${
-              role === 'hospital'
-                ? 'bg-primary text-white'
-                : 'text-text-muted'
+              role === 'hospital' ? 'bg-primary text-white' : 'text-text-muted'
             }`}
           >
             Hospital
           </button>
         </div>
 
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2 mb-4">
+            {error}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-text mb-1">
-              {role === 'hospital' ? 'Hospital Name' : 'Full Name'}
+            <label htmlFor="username" className="block text-sm font-medium text-text mb-1">
+              Username
             </label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
               className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={role === 'hospital' ? 'St. Mary Hospital' : 'Jane Doe'}
+              placeholder={role === 'hospital' ? 'stmary_hospital' : 'jane_doe'}
             />
           </div>
 
@@ -105,77 +135,91 @@ function Register() {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength={8}
               className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="••••••••"
             />
           </div>
 
+          <div>
+            <label htmlFor="phone_number" className="block text-sm font-medium text-text mb-1">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              id="phone_number"
+              name="phone_number"
+              value={formData.phone_number}
+              onChange={handleChange}
+              required
+              className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="+254 700 000000"
+            />
+          </div>
+
           {role === 'donor' && (
+            <div>
+              <label htmlFor="blood_type" className="block text-sm font-medium text-text mb-1">
+                Blood Type
+              </label>
+              <select
+                id="blood_type"
+                name="blood_type"
+                value={formData.blood_type}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="" disabled>Select blood type</option>
+                {BLOOD_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {role === 'hospital' && (
             <>
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-text mb-1">
-                  Phone
+                <label htmlFor="hospital_name" className="block text-sm font-medium text-text mb-1">
+                  Hospital Name
                 </label>
                 <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  type="text"
+                  id="hospital_name"
+                  name="hospital_name"
+                  value={formData.hospital_name}
                   onChange={handleChange}
                   required
                   className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="+254 700 000000"
+                  placeholder="St. Mary Hospital"
                 />
               </div>
 
               <div>
-                <label htmlFor="bloodType" className="block text-sm font-medium text-text mb-1">
-                  Blood Type
+                <label htmlFor="registration_no" className="block text-sm font-medium text-text mb-1">
+                  Registration / License Number
                 </label>
-                <select
-                  id="bloodType"
-                  name="bloodType"
-                  value={formData.bloodType}
+                <input
+                  type="text"
+                  id="registration_no"
+                  name="registration_no"
+                  value={formData.registration_no}
                   onChange={handleChange}
                   required
                   className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="" disabled>
-                    Select blood type
-                  </option>
-                  {BLOOD_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="e.g. KMPDC-12345"
+                />
               </div>
             </>
           )}
 
-          {role === 'hospital' && (
-            <div>
-              <label htmlFor="registrationNo" className="block text-sm font-medium text-text mb-1">
-                Registration / License Number
-              </label>
-              <input
-                type="text"
-                id="registrationNo"
-                name="registrationNo"
-                value={formData.registrationNo}
-                onChange={handleChange}
-                required
-                className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="e.g. KMPDC-12345"
-              />
-            </div>
-          )}
-
           <button
             type="submit"
-            className="w-full bg-primary text-white font-medium py-2 rounded-full hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full bg-primary text-white font-medium py-2 rounded-full hover:opacity-90 transition disabled:opacity-50"
           >
-            Create Account
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 

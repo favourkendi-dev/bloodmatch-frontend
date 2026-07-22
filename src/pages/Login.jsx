@@ -1,21 +1,38 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { loginUser, getCurrentUser } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 
 function Login() {
+  const navigate = useNavigate()
+  const { setUser } = useAuth()
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    //  logging 
-    console.log('Login submitted:', formData)
+    setError('')
+    setLoading(true)
+
+    try {
+      await loginUser(formData)
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+      navigate('/dashboard')
+    } catch (err) {
+      setError('Invalid username or password')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -28,20 +45,26 @@ function Login() {
           Log in to your BloodMatch account
         </p>
 
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2 mb-4">
+            {error}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
-              Email
+            <label htmlFor="username" className="block text-sm font-medium text-text mb-1">
+              Username
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
               className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="you@example.com"
+              placeholder="jane_doe"
             />
           </div>
 
@@ -63,9 +86,10 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full bg-primary text-white font-medium py-2 rounded-full hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full bg-primary text-white font-medium py-2 rounded-full hover:opacity-90 transition disabled:opacity-50"
           >
-            Log In
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { listBloodRequests, createBloodRequest } from '../lib/api'
+import {
+  listBloodRequests,
+  createBloodRequest,
+  getRequestMatches,
+  selectDonor,
+} from '../lib/api'
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const URGENCY_LEVELS = ['normal', 'urgent', 'critical']
@@ -28,6 +33,12 @@ function HospitalDashboard() {
     notes: '',
   })
 
+  // Matching state, keyed by request id
+  const [expandedRequestId, setExpandedRequestId] = useState(null)
+  const [matchesByRequest, setMatchesByRequest] = useState({})
+  const [matchesLoading, setMatchesLoading] = useState(false)
+  const [selectingDonorId, setSelectingDonorId] = useState(null)
+
   const loadRequests = async () => {
     setLoading(true)
     try {
@@ -41,6 +52,7 @@ function HospitalDashboard() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRequests()
   }, [])
 
@@ -66,6 +78,42 @@ function HospitalDashboard() {
       setError(err.message)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleViewMatches = async (requestId) => {
+    if (expandedRequestId === requestId) {
+      setExpandedRequestId(null)
+      return
+    }
+
+    setExpandedRequestId(requestId)
+    setError('')
+
+    if (!matchesByRequest[requestId]) {
+      setMatchesLoading(true)
+      try {
+        const donors = await getRequestMatches(requestId)
+        setMatchesByRequest((prev) => ({ ...prev, [requestId]: donors }))
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setMatchesLoading(false)
+      }
+    }
+  }
+
+  const handleSelectDonor = async (requestId, donorId) => {
+    setSelectingDonorId(donorId)
+    setError('')
+    try {
+      await selectDonor(requestId, donorId)
+      setExpandedRequestId(null)
+      await loadRequests()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSelectingDonorId(null)
     }
   }
 
@@ -214,15 +262,62 @@ function HospitalDashboard() {
                     {req.status.replace('_', ' ')}
                   </span>
                 </div>
+
                 {req.notes && (
                   <p className="text-sm text-text-muted mb-2">{req.notes}</p>
                 )}
-                <div className="flex justify-between items-center text-xs text-text-muted">
+
+                <div className="flex justify-between items-center text-xs text-text-muted mb-3">
                   <span className="capitalize">{req.urgency} urgency</span>
                   {req.matched_donor_username && (
                     <span>Matched: {req.matched_donor_username}</span>
                   )}
                 </div>
+
+                {req.status === 'open' && (
+                  <button
+                    onClick={() => handleViewMatches(req.id)}
+                    className="text-sm text-primary font-medium hover:underline"
+                  >
+                    {expandedRequestId === req.id ? 'Hide Matches' : 'View Matches'}
+                  </button>
+                )}
+
+                {expandedRequestId === req.id && (
+                  <div className="mt-3 border-t border-secondary/20 pt-3">
+                    {matchesLoading ? (
+                      <p className="text-sm text-text-muted">Finding compatible donors...</p>
+                    ) : (matchesByRequest[req.id] || []).length === 0 ? (
+                      <p className="text-sm text-text-muted">No compatible donors found nearby.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {matchesByRequest[req.id].map((donor) => (
+                          <div
+                            key={donor.id}
+                            className="flex justify-between items-center bg-background rounded-xl px-4 py-3"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-text">
+                                {donor.username} · {donor.blood_type}
+                              </p>
+                              <p className="text-xs text-text-muted">
+                                {donor.city}
+                                {donor.distance_km !== null && ` · ${donor.distance_km} km away`}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleSelectDonor(req.id, donor.id)}
+                              disabled={selectingDonorId === donor.id}
+                              className="bg-primary text-white text-xs font-medium px-4 py-2 rounded-full hover:opacity-90 transition disabled:opacity-50"
+                            >
+                              {selectingDonorId === donor.id ? 'Selecting...' : 'Select'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

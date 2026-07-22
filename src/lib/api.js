@@ -85,3 +85,15 @@ export async function acceptRequest(id) {
 export async function declineRequest(id) {
   return apiRequest(`/requests/${id}/decline/`, { method: 'POST', auth: true })
 }
+
+export async function getRequestMatches(id) {
+  return apiRequest(`/requests/${id}/matches/`, { auth: true })
+}
+
+export async function selectDonor(id, donorId) {
+  return apiRequest(`/requests/${id}/select_donor/`, {
+    method: 'POST',
+    body: { donor_id: donorId },
+    auth: true,
+  })
+}

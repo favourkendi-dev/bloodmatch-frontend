@@ -28,7 +28,7 @@ function Login() {
       const currentUser = await getCurrentUser()
       setUser(currentUser)
       navigate('/dashboard')
-    } catch (err) {
+    } catch {
       setError('Invalid username or password')
     } finally {
       setLoading(false)

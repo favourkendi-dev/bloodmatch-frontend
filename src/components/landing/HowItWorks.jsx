@@ -13,9 +13,8 @@ function HowItWorks() {
       description: 'Donors confirm, donate, and hospitals mark the request fulfilled.',
     },
   ]
-
   return (
-    <section className="px-6 py-16 bg-white">
+    <section id="how-it-works" className="px-6 py-16 bg-white">
       <h2 className="text-2xl font-semibold text-text text-center mb-10">
         How It Works
       </h2>
@@ -35,5 +34,4 @@ function HowItWorks() {
     </section>
   )
 }
-
 export default HowItWorks

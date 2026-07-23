@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   listAdminHospitals,
@@ -20,7 +20,8 @@ function AdminPanel() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const loadHospitals = async () => {
+  const loadHospitals = useCallback(async () => {
+    setError('')
     setLoading(true)
     try {
       const data = await listAdminHospitals()
@@ -30,9 +31,10 @@ function AdminPanel() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const loadDonors = async () => {
+  const loadDonors = useCallback(async () => {
+    setError('')
     setLoading(true)
     try {
       const data = await listAdminDonors()
@@ -42,9 +44,10 @@ function AdminPanel() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
+    setError('')
     setLoading(true)
     try {
       const data = await listAdminRequests()
@@ -54,9 +57,10 @@ function AdminPanel() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
+    setError('')
     setLoading(true)
     try {
       const data = await getAdminReports()
@@ -66,15 +70,25 @@ function AdminPanel() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    setError('')
-    if (activeTab === 'Hospitals') loadHospitals()
-    else if (activeTab === 'Donors') loadDonors()
-    else if (activeTab === 'Requests') loadRequests()
-    else if (activeTab === 'Reports') loadReports()
-  }, [activeTab])
+    let isMounted = true
+
+    const initialize = async () => {
+      if (!isMounted) return
+      if (activeTab === 'Hospitals') await loadHospitals()
+      else if (activeTab === 'Donors') await loadDonors()
+      else if (activeTab === 'Requests') await loadRequests()
+      else if (activeTab === 'Reports') await loadReports()
+    }
+
+    initialize()
+
+    return () => {
+      isMounted = false
+    }
+  }, [activeTab, loadHospitals, loadDonors, loadRequests, loadReports])
 
   const handleVerify = async (id) => {
     try {

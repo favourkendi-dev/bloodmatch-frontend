@@ -78,8 +78,8 @@ export async function listMyMatches() {
   return apiRequest('/requests/my_matches/', { auth: true })
 }
 
-export async function acceptRequest(id) {
-  return apiRequest(`/requests/${id}/accept/`, { method: 'POST', auth: true })
+export async function acceptRequest(id, healthAnswers) {
+  return apiRequest(`/requests/${id}/accept/`, { method: 'POST', body: healthAnswers, auth: true })
 }
 
 export async function declineRequest(id) {
@@ -104,4 +104,69 @@ export async function fulfillRequest(id) {
 
 export async function cancelRequest(id) {
   return apiRequest(`/requests/${id}/cancel/`, { method: 'POST', auth: true })
+}
+
+export async function listMessages(bloodRequestId) {
+  return apiRequest(`/messages/?blood_request=${bloodRequestId}`, { auth: true })
+}
+
+export async function sendMessage(bloodRequestId, content) {
+  return apiRequest('/messages/', {
+    method: 'POST',
+    body: { blood_request: bloodRequestId, content },
+    auth: true,
+  })
+}
+
+export async function listMyDonations() {
+  return apiRequest('/donors/donations/', { auth: true })
+}
+
+export async function getHospitalAnalytics() {
+  return apiRequest('/requests/analytics/', { auth: true })
+}
+
+export async function listNotifications() {
+  return apiRequest('/notifications/', { auth: true })
+}
+
+export async function markNotificationRead(id) {
+  return apiRequest(`/notifications/${id}/read/`, { method: 'PATCH', auth: true })
+}
+
+export async function listAdminHospitals() {
+  return apiRequest('/admin/hospitals/', { auth: true })
+}
+
+export async function verifyHospital(id) {
+  return apiRequest(`/admin/hospitals/${id}/verify/`, { method: 'POST', auth: true })
+}
+
+export async function listAdminDonors() {
+  return apiRequest('/admin/donors/', { auth: true })
+}
+
+export async function listAdminRequests() {
+  return apiRequest('/admin/requests/', { auth: true })
+}
+
+export async function adminCancelRequest(id) {
+  return apiRequest(`/admin/requests/${id}/cancel/`, { method: 'POST', auth: true })
+}
+
+export async function getAdminReports() {
+  return apiRequest('/admin/reports/', { auth: true })
+}
+
+export async function volunteerForRequest(id, healthAnswers) {
+  return apiRequest(`/requests/${id}/volunteer/`, { method: 'POST', body: healthAnswers, auth: true })
+}
+
+
+export async function updateBloodRequest(id, data) {
+  return apiRequest(`/requests/${id}/`, { method: 'PATCH', body: data, auth: true })
+}
+
+export async function deleteBloodRequest(id) {
+  return apiRequest(`/requests/${id}/`, { method: 'DELETE', auth: true })
 }

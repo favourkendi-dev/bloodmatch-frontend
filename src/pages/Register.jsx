@@ -13,6 +13,7 @@ function Register() {
     password: '',
     phone_number: '',
     blood_type: '',
+    city: '',
     hospital_name: '',
     registration_no: '',
   })
@@ -40,6 +41,7 @@ function Register() {
 
       if (role === 'donor') {
         payload.blood_type = formData.blood_type
+        payload.city = formData.city
       } else {
         payload.hospital_name = formData.hospital_name
         payload.registration_no = formData.registration_no
@@ -158,6 +160,23 @@ function Register() {
           </div>
 
           {role === 'donor' && (
+            <>
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-text mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-secondary/30 px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Nairobi"
+              />
+            </div>
+
             <div>
               <label htmlFor="blood_type" className="block text-sm font-medium text-text mb-1">
                 Blood Type
@@ -176,6 +195,7 @@ function Register() {
                 ))}
               </select>
             </div>
+            </>
           )}
 
           {role === 'hospital' && (

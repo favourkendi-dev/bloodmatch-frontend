@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { listNotifications, markNotificationRead } from '../lib/api'
 
 function NotificationBell() {
@@ -9,7 +9,7 @@ function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const data = await listNotifications()
@@ -19,13 +19,25 @@ function NotificationBell() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    load()
+    let isMounted = true
+
+    const initialize = async () => {
+      if (!isMounted) return
+      setLoading(true)
+      await load()
+      if (isMounted) setLoading(false)
+    }
+
+    initialize()
     const interval = setInterval(load, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [load])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
